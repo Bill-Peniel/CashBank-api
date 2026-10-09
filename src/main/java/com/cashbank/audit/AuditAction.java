@@ -1,0 +1,16 @@
+package com.cashbank.audit;
+
+public enum AuditAction {
+    USER_REGISTERED,
+    LOGIN,
+    LOGOUT,
+    TOKEN_REFRESHED,
+    PROFILE_UPDATED,
+    DEPOSIT,
+    WITHDRAWAL,
+    TRANSFER,
+    BENEFICIARY_ADDED,
+    BENEFICIARY_REMOVED,
+    USER_STATUS_CHANGED,
+    WALLET_STATUS_CHANGED
+}

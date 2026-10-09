@@ -1,0 +1,61 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: cashbank
+      POSTGRES_USER: cashbank
+      POSTGRES_PASSWORD: cashbank
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cashbank -d cashbank"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:8-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/cashbank
+      DB_USERNAME: cashbank
+      DB_PASSWORD: cashbank
+      REDIS_HOST: redis
+      RABBITMQ_HOST: rabbitmq
+      JWT_SECRET: ${JWT_SECRET:-Y2FzaGJhbmstZGV2LXNlY3JldC1rZXktY2hhbmdlLW1lLWluLXByb2R1Y3Rpb24h}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@cashbank.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin@12345}
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres-data:

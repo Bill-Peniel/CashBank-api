@@ -1,0 +1,84 @@
+spring:
+  application:
+    name: cashbank-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/cashbank}
+    username: ${DB_USERNAME:cashbank}
+    password: ${DB_PASSWORD:cashbank}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        jdbc.time_zone: UTC
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+    web:
+      pageable:
+        max-page-size: 100
+  cache:
+    type: redis
+    redis:
+      time-to-live: 10m
+      key-prefix: "cashbank:cache:"
+  rabbitmq:
+    host: ${RABBITMQ_HOST:localhost}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USERNAME:guest}
+    password: ${RABBITMQ_PASSWORD:guest}
+    listener:
+      simple:
+        default-requeue-rejected: false
+        retry:
+          enabled: true
+          max-attempts: 3
+          initial-interval: 1s
+          multiplier: 2
+
+server:
+  error:
+    include-stacktrace: never
+
+cashbank:
+  currency: XOF
+  security:
+    jwt:
+      # Base64 HMAC key (>= 256 bits). Override with JWT_SECRET in production.
+      secret: ${JWT_SECRET:Y2FzaGJhbmstZGV2LXNlY3JldC1rZXktY2hhbmdlLW1lLWluLXByb2R1Y3Rpb24h}
+      issuer: cashbank-api
+      access-token-ttl: 15m
+      refresh-token-ttl: 7d
+    login:
+      max-attempts: 5
+      lock-duration: 15m
+  limits:
+    min-amount: 100
+    max-per-transaction: 1000000
+    daily-outgoing: 2000000
+    zone: Africa/Porto-Novo
+  admin:
+    email: ${ADMIN_EMAIL:admin@cashbank.local}
+    password: ${ADMIN_PASSWORD:Admin@12345}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p [%X{requestId:-}] %-40.40logger{39} : %m%n"
+  level:
+    com.cashbank: DEBUG
